@@ -1,0 +1,15 @@
+# Секреты — никогда в репозиторий
+.env
+*.key
+*.pem
+
+# Данные и бэкапы
+data/
+backups/
+*.db
+
+# Служебное
+__pycache__/
+*.pyc
+venv/
+.DS_Store

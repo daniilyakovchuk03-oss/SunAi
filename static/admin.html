@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Панель управления — WhatsApp AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F3EF; --panel:#FFF; --ink:#1C2024; --muted:#6E7169;
+  --line:#E0E2DC; --soft:#EDEEE9;
+  --pass:#2E7D5B; --fail:#A6402F; --wait:#B4741A;
+  --ai:#3B4E8F; --ai-bg:#EDF0FA; --mgr:#8A6A1F; --mgr-bg:#FBF3DF;
+  --sans:'Archivo',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font:400 14px/1.55 var(--sans);
+  -webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--ai)}
+.hide{display:none !important}
+
+/* ---------- вход ---------- */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}
+.login .card{width:100%;max-width:360px;padding:28px}
+.login h1{font-size:19px;font-weight:600;margin-bottom:4px}
+.login p{color:var(--muted);font-size:13px;margin-bottom:20px}
+
+/* ---------- каркас ---------- */
+.shell{display:grid;grid-template-columns:216px minmax(0,1fr);min-height:100vh}
+@media(max-width:820px){.shell{grid-template-columns:1fr}nav.side{position:static !important;height:auto !important}}
+nav.side{background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;
+  position:sticky;top:0;height:100vh}
+.brand{font-size:15px;font-weight:600;padding:0 10px 16px;letter-spacing:-.01em}
+.brand small{display:block;font:400 11px var(--mono);color:var(--muted);margin-top:3px}
+.nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:9px 10px;border-radius:7px;color:var(--muted);text-decoration:none;font-size:14px}
+.nav a:hover{background:var(--soft);color:var(--ink)}
+.nav a.on{background:var(--ink);color:#fff}
+.nav a .n{font:500 11px var(--mono);opacity:.7}
+.side .foot{position:absolute;bottom:16px;left:12px;right:12px;font-size:12px;color:var(--muted)}
+.side .foot b{display:block;color:var(--ink);font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+main{padding:24px 28px;min-width:0}
+@media(max-width:820px){main{padding:18px 16px}}
+.head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.head h1{font-size:20px;font-weight:600;letter-spacing:-.015em}
+.head .sp{flex:1}
+.head p{color:var(--muted);font-size:13px;width:100%;margin-top:-6px}
+
+/* ---------- элементы ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.card>h2{font:600 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.09em;
+  color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--soft)}
+.body{padding:16px}
+.row{display:grid;gap:14px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;
+  text-transform:uppercase;letter-spacing:.06em}
+input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--panel)}
+textarea{resize:vertical;min-height:96px;line-height:1.6}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ai);outline-offset:-1px;
+  border-color:var(--ai)}
+.hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
+
+.btn{padding:9px 16px;border:0;border-radius:7px;background:var(--ink);color:#fff;
+  font-weight:500;cursor:pointer}
+.btn:hover{background:#000}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--muted)}
+.btn.ghost:hover{border-color:var(--muted);color:var(--ink)}
+.btn.warn{background:var(--mgr-bg);color:var(--mgr);border:1px solid #EBDCB0}
+.btn:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 12px/1 var(--sans);padding:6px 10px;border-radius:20px;cursor:pointer;
+  border:1px solid var(--line);background:var(--panel);color:var(--muted);display:inline-flex;
+  align-items:center;gap:6px}
+.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip.x{cursor:default}
+.chip.x button{background:none;border:0;cursor:pointer;color:inherit;opacity:.6;
+  font-size:15px;line-height:1;padding:0}
+.chip.x button:hover{opacity:1}
+
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi .k{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 16px}
+.kpi .k span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.07em;margin-bottom:7px}
+.kpi .k b{font:500 24px/1 var(--sans);letter-spacing:-.02em}
+.kpi .k i{font-style:normal;font-size:12px;color:var(--muted);display:block;margin-top:5px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font:600 11px var(--sans);text-transform:uppercase;letter-spacing:.07em;
+  color:var(--muted);padding:10px 16px;border-bottom:1px solid var(--soft)}
+td{padding:11px 16px;border-bottom:1px solid var(--soft);vertical-align:top}
+tr:last-child td{border:0}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--soft)}
+.mono{font:400 12px var(--mono)}
+.dim{color:var(--muted)}
+.trunc{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font:500 11.5px var(--sans);
+  padding:4px 9px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+.pill .d{width:7px;height:7px;border-radius:50%}
+.p-active .d,.p-reply .d{background:var(--pass)} .p-active,.p-reply{color:var(--pass);border-color:#BFDCCE}
+.p-armed .d,.p-queue .d{background:var(--wait)} .p-armed,.p-queue{color:var(--wait);border-color:#EBDCB0}
+.p-handed_off .d,.p-handoff .d{background:var(--mgr)} .p-handed_off,.p-handoff{color:var(--mgr);border-color:#EBDCB0}
+.p-sleeping .d,.p-silent .d{background:var(--muted)} .p-sleeping,.p-silent{color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:60;
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:13.5px;
+  box-shadow:0 6px 24px rgba(0,0,0,.16);max-width:min(560px,92vw)}
+.toast.err{background:var(--fail)}
+
+/* ---------- карточка диалога ---------- */
+.drawer{position:fixed;inset:0;background:rgba(28,32,36,.4);z-index:50;display:flex;
+  justify-content:flex-end}
+.drawer .in{width:min(620px,100%);background:var(--paper);height:100%;overflow-y:auto;
+  border-left:1px solid var(--line)}
+.drawer header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);
+  padding:15px 20px;display:flex;align-items:center;gap:12px;z-index:2}
+.drawer header h3{font-size:15px;font-weight:600;flex:1}
+.drawer .in>div{padding:16px 20px}
+.msg{max-width:80%;margin-bottom:9px;padding:9px 13px;border-radius:14px;font-size:13.5px;
+  word-wrap:break-word}
+.msg .who{font:500 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.07em;
+  display:block;margin-bottom:4px;opacity:.75}
+.m-client{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px}
+.m-ai{background:var(--ai-bg);border:1px solid #D5DCF2;color:#1D2647;margin-left:auto;
+  border-bottom-right-radius:4px}
+.m-ai .who{color:var(--ai)}
+.m-manager{background:var(--mgr-bg);border:1px solid #EBDCB0;color:#4A3A10;margin-left:auto;
+  border-bottom-right-radius:4px}
+.m-manager .who{color:var(--mgr)}
+.tr{display:flex;gap:9px;padding:5px 0;font:400 11.5px var(--mono);align-items:flex-start;
+  border-bottom:1px dashed var(--soft)}
+.tr:last-child{border:0}
+.tr i{font-style:normal;font-weight:500;width:12px;flex:none}
+.tr.ok i{color:var(--pass)} .tr.no i{color:var(--fail)} .tr.no{color:var(--fail)}
+.tr .d{margin-left:auto;color:var(--muted);text-align:right;max-width:46%}
+.dec{border-left:2px solid var(--line);padding:2px 0 2px 12px;margin-bottom:14px}
+.dec>b{font-size:12.5px;font-weight:500;display:block;margin-bottom:5px}
+
+.bars{display:grid;gap:9px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 44px;gap:10px;align-items:center;
+  font-size:12.5px}
+.bar-row .t{height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.bar-row .t i{display:block;height:100%;background:var(--ai)}
+.bar-row b{font:500 12px var(--mono);text-align:right}
+</style>
+</head>
+<body>
+
+<!-- ВХОД -->
+<div class="login" id="login">
+  <div class="card">
+    <div class="body">
+      <h1>Панель управления</h1>
+      <p>WhatsApp AI-агент</p>
+      <div class="row">
+        <div>
+          <label for="em">Почта</label>
+          <input type="email" id="em" autocomplete="username" value="admin@local">
+        </div>
+        <div>
+          <label for="pw">Пароль</label>
+          <input type="password" id="pw" autocomplete="current-password"
+                 onkeydown="if(event.key==='Enter')doLogin()">
+          <div class="hint">Пароль напечатан в логе сервера при первом запуске.</div>
+        </div>
+        <button class="btn" onclick="doLogin()">Войти</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ПАНЕЛЬ -->
+<div class="shell hide" id="shell">
+  <nav class="side">
+    <div class="brand">WhatsApp AI<small id="mode">—</small></div>
+    <div class="nav" id="nav"></div>
+    <div class="foot">
+      <b id="who">—</b>
+      <button class="btn ghost" style="margin-top:8px;width:100%" onclick="doLogout()">Выйти</button>
+    </div>
+  </nav>
+  <main id="view"></main>
+</div>
+
+<script>
+// ============ инфраструктура ============
+const $ = id => document.getElementById(id);
+const esc = s => { const d=document.createElement('div'); d.textContent=s??''; return d.innerHTML; };
+const num = v => (v??0).toLocaleString('ru-RU');
+
+async function api(path, opts={}){
+  const r = await fetch('/api'+path, {headers:{'Content-Type':'application/json'}, ...opts});
+  if(r.status===401){ showLogin(); throw new Error('unauthorized'); }
+  const data = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.detail || 'Ошибка запроса');
+  return data;
+}
+function toast(msg, err){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t=document.createElement('div');
+  t.className='toast'+(err?' err':''); t.textContent=msg; t.setAttribute('role','status');
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 3600);
+}
+const STATES={sleeping:'спит',armed:'взведён',active:'ведёт диалог',handed_off:'у менеджера'};
+const VERDICTS={reply:'отвечает',silent:'молчит',handoff:'передал',queue:'отложено'};
+const pill=(k,map)=>`<span class="pill p-${k}"><span class="d"></span>${map[k]||k}</span>`;
+const when=t=> t? new Date(t*1000).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',
+  hour:'2-digit',minute:'2-digit'}) : '—';
+
+// ============ вход ============
+function showLogin(){ $('login').classList.remove('hide'); $('shell').classList.add('hide'); }
+async function doLogin(){
+  try{
+    await api('/login',{method:'POST',body:JSON.stringify({email:$('em').value,password:$('pw').value})});
+    boot();
+  }catch(e){ toast(e.message,true); }
+}
+async function doLogout(){ await api('/logout',{method:'POST'}); location.reload(); }
+
+// ============ навигация ============
+const PAGES=[
+  {id:'overview', title:'Обзор',   sub:'Что происходит с диалогами'},
+  {id:'dialogs',  title:'Диалоги', sub:'Каждое решение с трассировкой'},
+  {id:'rules',    title:'Правила', sub:'Когда ИИ говорит, а когда молчит'},
+  {id:'prompt',   title:'Знания',  sub:'Что и как ИИ говорит клиентам'},
+];
+function renderNav(active){
+  $('nav').innerHTML = PAGES.map(p=>
+    `<a href="#${p.id}" class="${p.id===active?'on':''}">${p.title}</a>`).join('')
+    + `<a href="/test" target="_blank">Тестовый чат <span class="n">↗</span></a>`;
+}
+async function route(){
+  const id = (location.hash.slice(1) || 'overview');
+  const page = PAGES.find(p=>p.id===id) || PAGES[0];
+  renderNav(page.id);
+  $('view').innerHTML = `<div class="head"><h1>${page.title}</h1><p>${page.sub}</p></div>
+    <div id="slot"></div>`;
+  try{ await ({overview:pageOverview,dialogs:pageDialogs,rules:pageRules,prompt:pagePrompt}[page.id])(); }
+  catch(e){ if(e.message!=='unauthorized') $('slot').innerHTML=`<div class="card"><div class="body">${esc(e.message)}</div></div>`; }
+}
+window.addEventListener('hashchange', route);
+
+async function boot(){
+  const me = await api('/me');
+  $('login').classList.add('hide'); $('shell').classList.remove('hide');
+  $('who').textContent = me.email;
+  const h = await fetch('/health').then(r=>r.json());
+  $('mode').textContent = 'режим '+h.mode;
+  route();
+}
+
+// ============ ОБЗОР ============
+async function pageOverview(){
+  const s = await api('/stats?days=7');
+  const total = Object.values(s.verdicts||{}).reduce((a,b)=>a+b,0) || 1;
+  const vRows = Object.entries(s.verdicts||{}).map(([k,v])=>`
+    <div class="bar-row"><span>${VERDICTS[k]||k}</span>
+      <span class="t"><i style="width:${Math.round(v/total*100)}%"></i></span>
+      <b>${num(v)}</b></div>`).join('') || '<div class="dim">Решений пока нет</div>';
+
+  $('slot').innerHTML = `
+    <div class="kpi">
+      <div class="k"><span>Диалогов за 7 дней</span><b>${num(s.dialogs)}</b>
+        <i>${num(s.client_messages)} сообщений от клиентов</i></div>
+      <div class="k"><span>Реплик ИИ</span><b>${num(s.ai_messages)}</b>
+        <i>внутри бесплатного окна</i></div>
+      <div class="k"><span>Передано людям</span><b>${s.handoff_rate}%</b>
+        <i>${num(s.handoffs)} случаев</i></div>
+      <div class="k"><span>Очередь</span><b>${num(s.pending_jobs)}</b>
+        <i>${s.failed_jobs? num(s.failed_jobs)+' с ошибкой' : 'сбоев нет'}</i></div>
+    </div>
+    <div class="cols" style="margin-top:14px">
+      <section class="card"><h2>Решения ИИ</h2><div class="body"><div class="bars">${vRows}</div></div></section>
+      <section class="card"><h2>Почему молчал</h2><div class="body" id="why"></div></section>
+    </div>`;
+
+  $('why').innerHTML = (s.silent_reasons||[]).length
+    ? s.silent_reasons.map(r=>`<div class="bar-row" style="grid-template-columns:1fr 44px">
+        <span>${esc(r.reason)}</span><b>${num(r.c)}</b></div>`).join('')
+    : '<div class="dim">Причин для молчания не было</div>';
+}
+
+// ============ ДИАЛОГИ ============
+let dlgFilter={state:'',q:''};
+async function pageDialogs(){
+  $('slot').innerHTML = `
+    <div class="bar" style="margin-bottom:14px">
+      <select id="fst" style="width:190px" onchange="dlgFilter.state=this.value;loadDialogs()">
+        <option value="">Все состояния</option>
+        <option value="armed">Взведён</option>
+        <option value="active">Ведёт диалог</option>
+        <option value="handed_off">У менеджера</option>
+        <option value="sleeping">Спит</option>
+      </select>
+      <input type="text" id="fq" placeholder="Поиск по номеру" style="width:220px"
+             oninput="dlgFilter.q=this.value" onkeydown="if(event.key==='Enter')loadDialogs()">
+      <button class="btn ghost" onclick="loadDialogs()">Найти</button>
+    </div>
+    <section class="card"><div id="dl"></div></section>`;
+  $('fst').value=dlgFilter.state; $('fq').value=dlgFilter.q;
+  loadDialogs();
+}
+async function loadDialogs(){
+  const r = await api(`/dialogs?state=${encodeURIComponent(dlgFilter.state)}&q=${encodeURIComponent(dlgFilter.q)}`);
+  if(!r.items.length){ $('dl').innerHTML='<div class="body dim">Диалогов пока нет</div>'; return; }
+  $('dl').innerHTML = `<table><thead><tr>
+      <th>Номер</th><th>Состояние</th><th>Последнее сообщение</th><th>Решение</th><th>Активность</th>
+    </tr></thead><tbody>${r.items.map(d=>`
+      <tr onclick="openDialog('${esc(d.chat_id)}')">
+        <td class="mono">${esc(d.phone||d.chat_id)}</td>
+        <td>${pill(d.state,STATES)}</td>
+        <td class="trunc dim">${d.last_message? esc(d.last_message.text):'—'}</td>
+        <td>${d.last_decision? pill(d.last_decision.verdict,VERDICTS):'<span class="dim">—</span>'}</td>
+        <td class="mono dim">${when(d.last_inbound_at)}</td>
+      </tr>`).join('')}</tbody></table>`;
+}
+
+async function openDialog(chatId){
+  const d = await api('/dialogs/'+encodeURIComponent(chatId));
+  const isOff = d.dialog.state==='handed_off';
+  const wrap=document.createElement('div');
+  wrap.className='drawer'; wrap.onclick=e=>{ if(e.target===wrap) wrap.remove(); };
+  wrap.innerHTML = `<div class="in">
+    <header>
+      <h3>${esc(d.dialog.phone||chatId)}</h3>
+      ${pill(d.dialog.state,STATES)}
+      <button class="btn ${isOff?'ghost':'warn'}" onclick="setState('${esc(chatId)}','${isOff?'armed':'handed_off'}')">
+        ${isOff?'Вернуть ИИ':'Забрать себе'}</button>
+      <button class="btn ghost" onclick="this.closest('.drawer').remove()">Закрыть</button>
+    </header>
+    <div>
+      <div class="kpi" style="grid-template-columns:repeat(3,1fr)">
+        <div class="k"><span>Этап</span><b style="font-size:15px">${esc(d.deal.stage||'—')}</b></div>
+        <div class="k"><span>Реплик ИИ</span><b style="font-size:15px">${d.dialog.ai_message_count||0}</b></div>
+        <div class="k"><span>Окно</span><b style="font-size:15px">${d.window_hours_left==null?'—':d.window_hours_left.toFixed(1)+' ч'}</b></div>
+      </div>
+    </div>
+    <div><section class="card"><h2>Переписка</h2><div class="body">
+      ${d.messages.length? d.messages.map(m=>`<div class="msg m-${m.author}">
+        <span class="who">${({client:'клиент',ai:'ии',manager:'менеджер'})[m.author]||m.author}</span>
+        ${esc(m.text)}</div>`).join('') : '<div class="dim">Сообщений нет</div>'}
+    </div></section></div>
+    <div><section class="card"><h2>Решения</h2><div class="body">
+      ${d.decisions.slice().reverse().map(dec=>`<div class="dec">
+        <b>${pill(dec.verdict,VERDICTS)} <span class="dim mono">${when(dec.created_at)}</span></b>
+        <div style="font-size:12.5px;margin-bottom:6px">${esc(dec.reason)}</div>
+        ${(dec.checks||[]).map(c=>`<div class="tr ${c.passed?'ok':'no'}">
+          <i>${c.passed?'✓':'✕'}</i><span>${esc(c.name)}</span>
+          ${c.detail?`<span class="d">${esc(c.detail)}</span>`:''}</div>`).join('')}
+      </div>`).join('') || '<div class="dim">Решений нет</div>'}
+    </div></section></div></div>`;
+  document.body.appendChild(wrap);
+}
+async function setState(chatId, state){
+  await api(`/dialogs/${encodeURIComponent(chatId)}/state`,
+    {method:'POST',body:JSON.stringify({state})});
+  document.querySelector('.drawer')?.remove();
+  toast(state==='handed_off'?'Диалог у вас — ИИ молчит':'ИИ снова ведёт диалог');
+  loadDialogs();
+}
+
+// ============ ПРАВИЛА ============
+let R={};
+const tagList=(id,arr)=>`<div class="chips" id="${id}">${(arr||[]).map(t=>
+  `<span class="chip x">${esc(t)}<button type="button" aria-label="Убрать" onclick="rmTag('${id}','${esc(t)}')">×</button></span>`).join('')}
+  <button class="chip" type="button" onclick="addTag('${id}')">+ добавить</button></div>`;
+
+function addTag(id){
+  const v=prompt('Новое значение'); if(!v) return;
+  const path=id.split('.'); let o=R;
+  for(const p of path.slice(0,-1)) o=o[p]=o[p]||{};
+  const k=path[path.length-1]; o[k]=o[k]||[];
+  if(!o[k].includes(v.trim())) o[k].push(v.trim());
+  pageRules();
+}
+function rmTag(id,val){
+  const path=id.split('.'); let o=R;
+  for(const p of path.slice(0,-1)) o=o[p]=o[p]||{};
+  const k=path[path.length-1];
+  o[k]=(o[k]||[]).filter(x=>String(x)!==val);
+  pageRules();
+}
+const DAYS=['пн','вт','ср','чт','пт','сб','вс'];
+
+async function pageRules(){
+  if(!Object.keys(R).length) R = await api('/rules');
+  const s=R.stages||{}, sl=R.stop_list||{}, ms=R.manual_switch||{},
+        sc=R.schedule||{}, li=R.limits||{}, hf=R.handoff||{}, wb=R.amo_writeback||{};
+
+  $('slot').innerHTML = `
+  <div class="cols" style="align-items:start">
+    <div class="row">
+      <section class="card"><h2>Где ИИ работает</h2><div class="body row">
+        <div>
+          <label for="smode">Режим этапов</label>
+          <select id="smode"><option value="allowlist"${s.mode==='allowlist'?' selected':''}>Только перечисленные</option>
+            <option value="blocklist"${s.mode==='blocklist'?' selected':''}>Все, кроме перечисленных</option></select>
+        </div>
+        <div><label>Этапы воронки</label>${tagList('stages.values',s.values)}
+          <div class="hint">Названия должны совпадать с amoCRM буква в букву.</div></div>
+      </div></section>
+
+      <section class="card"><h2>Кому нельзя писать</h2><div class="body row">
+        <div><label>Теги стоп-листа</label>${tagList('stop_list.tags',sl.tags)}</div>
+        <div><label>Номера</label>${tagList('stop_list.phones',sl.phones)}</div>
+      </div></section>
+
+      <section class="card"><h2>Ручные тумблеры</h2><div class="body cols">
+        <div><label for="ton">Тег включения</label>
+          <input type="text" id="ton" value="${esc(ms.on_tag||'')}">
+          <div class="hint">Перекрывает правило этапов.</div></div>
+        <div><label for="toff">Тег выключения</label>
+          <input type="text" id="toff" value="${esc(ms.off_tag||'')}"></div>
+      </div></section>
+
+      <section class="card"><h2>Часы работы</h2><div class="body row">
+        <div class="cols">
+          <div><label for="sst">Начало</label><input type="text" id="sst" value="${esc(sc.start||'09:00')}"></div>
+          <div><label for="sen">Конец</label><input type="text" id="sen" value="${esc(sc.end||'21:00')}"></div>
+        </div>
+        <div><label>Рабочие дни</label><div class="chips" id="days">${DAYS.map((d,i)=>
+          `<button type="button" class="chip" aria-pressed="${(sc.workdays||[]).includes(i+1)}"
+             onclick="this.setAttribute('aria-pressed',this.getAttribute('aria-pressed')!=='true')">${d}</button>`).join('')}</div></div>
+        <div><label for="soh">Вне часов работы</label>
+          <select id="soh"><option value="queue"${sc.outside_hours==='queue'?' selected':''}>Ответить утром</option>
+            <option value="silent"${sc.outside_hours==='silent'?' selected':''}>Промолчать</option></select></div>
+      </div></section>
+    </div>
+
+    <div class="row">
+      <section class="card"><h2>Ограничители</h2><div class="body cols">
+        <div><label for="lmax">Реплик ИИ на диалог</label>
+          <input type="number" id="lmax" min="1" value="${li.max_ai_messages_per_dialog??20}"></div>
+        <div><label for="lfu">Дожимов</label>
+          <input type="number" id="lfu" min="0" value="${li.max_followups??2}"></div>
+        <div><label for="lfm">Дожим через, мин</label>
+          <input type="number" id="lfm" min="5" value="${li.followup_after_minutes??240}"></div>
+        <div><label for="lgap">Пауза между ответами, с</label>
+          <input type="number" id="lgap" min="0" value="${li.min_seconds_between_replies??5}"></div>
+      </div></section>
+
+      <section class="card"><h2>Передача человеку</h2><div class="body row">
+        <div><label>Слова-триггеры</label>${tagList('handoff.keywords',hf.keywords)}</div>
+        <div class="chips">
+          <button type="button" class="chip" id="hprice" aria-pressed="${!!hf.on_price_negotiation}"
+            onclick="this.setAttribute('aria-pressed',this.getAttribute('aria-pressed')!=='true')">торг по цене</button>
+          <button type="button" class="chip" id="hprof" aria-pressed="${!!hf.on_profanity}"
+            onclick="this.setAttribute('aria-pressed',this.getAttribute('aria-pressed')!=='true')">мат</button>
+        </div>
+        <div><label for="hrep">Повтор вопроса, раз</label>
+          <input type="number" id="hrep" min="0" value="${hf.on_repeat_question??3}">
+          <div class="hint">0 — не отслеживать.</div></div>
+      </div></section>
+
+      <section class="card"><h2>Запись в amoCRM</h2><div class="body row">
+        <div class="chips">
+          <button type="button" class="chip" id="wnote" aria-pressed="${!!wb.add_note}"
+            onclick="this.setAttribute('aria-pressed',this.getAttribute('aria-pressed')!=='true')">примечания</button>
+          <button type="button" class="chip" id="wmove" aria-pressed="${!!wb.move_stage}"
+            onclick="this.setAttribute('aria-pressed',this.getAttribute('aria-pressed')!=='true')">менять этап</button>
+        </div>
+        <div class="hint">Менять этап самостоятельно — рискованно. Включайте, когда доверитесь боту.</div>
+        <div><label for="wtag">Тег при передаче</label>
+          <input type="text" id="wtag" value="${esc(wb.set_tag_on_handoff||'')}"></div>
+      </div></section>
+
+      <section class="card"><h2>Проверить правила</h2><div class="body row">
+        <div class="cols">
+          <div><label for="pstage">Этап</label><input type="text" id="pstage" value="${esc((s.values||[])[0]||'')}"></div>
+          <div><label for="ptags">Теги через запятую</label><input type="text" id="ptags" placeholder="ии, отказ"></div>
+        </div>
+        <div><label for="ptext">Сообщение клиента</label>
+          <input type="text" id="ptext" value="Здравствуйте, сколько стоит?"></div>
+        <button class="btn ghost" onclick="doPreview()">Прогнать</button>
+        <div id="pres"></div>
+      </div></section>
+    </div>
+  </div>
+  <div class="bar" style="margin-top:16px;position:sticky;bottom:0;background:var(--paper);
+       padding:12px 0;border-top:1px solid var(--line)">
+    <button class="btn" onclick="saveRules()">Сохранить правила</button>
+    <button class="btn ghost" onclick="R={};pageRules()">Отменить изменения</button>
+    <span class="dim" style="font-size:12.5px">Применяются сразу, перезапуск не нужен</span>
+  </div>`;
+}
+
+function collectRules(){
+  const on=id=>$(id).getAttribute('aria-pressed')==='true';
+  return {
+    ...R,
+    enabled: R.enabled!==false,
+    stages:{mode:$('smode').value, values:(R.stages||{}).values||[]},
+    stop_list:{...(R.stop_list||{}), tags:(R.stop_list||{}).tags||[],
+               phones:(R.stop_list||{}).phones||[]},
+    manual_switch:{on_tag:$('ton').value.trim(), off_tag:$('toff').value.trim()},
+    schedule:{...(R.schedule||{}), start:$('sst').value.trim(), end:$('sen').value.trim(),
+      outside_hours:$('soh').value,
+      workdays:[...$('days').children].map((c,i)=>c.getAttribute('aria-pressed')==='true'?i+1:0).filter(Boolean)},
+    limits:{...(R.limits||{}),
+      max_ai_messages_per_dialog:+$('lmax').value, max_followups:+$('lfu').value,
+      followup_after_minutes:+$('lfm').value, min_seconds_between_replies:+$('lgap').value,
+      window_hours:(R.limits||{}).window_hours??24},
+    handoff:{...(R.handoff||{}), keywords:(R.handoff||{}).keywords||[],
+      on_price_negotiation:on('hprice'), on_profanity:on('hprof'),
+      on_repeat_question:+$('hrep').value},
+    amo_writeback:{...(R.amo_writeback||{}), add_note:on('wnote'), move_stage:on('wmove'),
+      set_tag_on_handoff:$('wtag').value.trim()},
+  };
+}
+async function saveRules(){
+  try{
+    const payload=collectRules();
+    await api('/rules',{method:'PUT',body:JSON.stringify(payload)});
+    R=payload; toast('Правила сохранены и уже действуют');
+  }catch(e){ toast(e.message,true); }
+}
+async function doPreview(){
+  const body={stage:$('pstage').value, text:$('ptext').value,
+    tags:$('ptags').value.split(',').map(s=>s.trim()).filter(Boolean)};
+  try{
+    await api('/rules',{method:'PUT',body:JSON.stringify(collectRules())});
+    const d=await api('/rules/preview',{method:'POST',body:JSON.stringify(body)});
+    $('pres').innerHTML=`<div style="margin-top:12px">${pill(d.verdict,VERDICTS)}
+      <div style="font-size:13px;margin:8px 0">${esc(d.reason)}</div>
+      ${d.checks.map(c=>`<div class="tr ${c.passed?'ok':'no'}"><i>${c.passed?'✓':'✕'}</i>
+        <span>${esc(c.name)}</span>${c.detail?`<span class="d">${esc(c.detail)}</span>`:''}</div>`).join('')}</div>`;
+  }catch(e){ toast(e.message,true); }
+}
+
+// ============ ЗНАНИЯ ============
+async function pagePrompt(){
+  const p = await api('/prompt');
+  $('slot').innerHTML=`
+  <div class="row" style="max-width:840px">
+    <section class="card"><h2>Задача ИИ</h2><div class="body row">
+      <div><label for="pgoal">Что он должен добиться в диалоге</label>
+        <input type="text" id="pgoal" value="${esc(p.goal)}">
+        <div class="hint">Одна конкретная цель работает лучше трёх размытых.</div></div>
+      <div><label for="ptone">Тон общения</label><textarea id="ptone">${esc(p.tone)}</textarea></div>
+      <div><label for="pforb">Что запрещено говорить</label><textarea id="pforb">${esc(p.forbidden)}</textarea>
+        <div class="hint">Скидки, сроки, гарантии — всё, за что потом отвечать вам.</div></div>
+      <div><label for="pmax">Максимум предложений в ответе</label>
+        <input type="number" id="pmax" min="1" max="8" value="${p.max_sentences}"></div>
+    </div></section>
+
+    <section class="card"><h2>База знаний</h2><div class="body row">
+      <div><label for="pkb">Прайс, услуги, частые вопросы</label>
+        <textarea id="pkb" style="min-height:260px">${esc(p.knowledge)}</textarea>
+        <div class="hint">Пишите так, как объяснили бы новому сотруднику. Чего здесь нет —
+          того ИИ не знает и придумывать не станет.</div></div>
+    </div></section>
+
+    <div class="bar"><button class="btn" onclick="savePrompt()">Сохранить</button></div>
+  </div>`;
+}
+async function savePrompt(){
+  try{
+    await api('/prompt',{method:'PUT',body:JSON.stringify({
+      goal:$('pgoal').value, tone:$('ptone').value, forbidden:$('pforb').value,
+      knowledge:$('pkb').value, max_sentences:+$('pmax').value})});
+    toast('Сохранено');
+  }catch(e){ toast(e.message,true); }
+}
+
+// ============ старт ============
+boot().catch(()=>showLogin());
+</script>
+</body>
+</html>

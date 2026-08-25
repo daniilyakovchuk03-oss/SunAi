@@ -1,0 +1,10 @@
+services:
+  agent:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/srv/data
+      - ./rules.yaml:/srv/rules.yaml

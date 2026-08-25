@@ -1,0 +1,20 @@
+# Серверный compose для KURSOR (Yandex Cloud), каталог /opt/sunai.
+# Отличия от локального docker-compose.yml в корне проекта:
+#   * порты наружу НЕ публикуются — снаружи стоит Caddy из /opt/kursor;
+#   * контейнер включён во внешнюю сеть kursor_default, где его находит Caddy;
+#   * имя проекта задано явно, поэтому контейнер всегда зовётся sunai-sunai-1.
+name: sunai
+
+services:
+  sunai:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/srv/data          # база SQLite переживает пересборку
+      - ./rules.yaml:/srv/rules.yaml
+
+networks:
+  default:
+    name: kursor_default
+    external: true

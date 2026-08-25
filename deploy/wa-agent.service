@@ -1,0 +1,25 @@
+[Unit]
+Description=WhatsApp AI agent
+After=network.target
+
+[Service]
+Type=simple
+User=waagent
+Group=waagent
+WorkingDirectory=/opt/wa-agent
+EnvironmentFile=/opt/wa-agent/.env
+ExecStart=/opt/wa-agent/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Ограничения безопасности
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/wa-agent/data /opt/wa-agent/backups
+
+[Install]
+WantedBy=multi-user.target
